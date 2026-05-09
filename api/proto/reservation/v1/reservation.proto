@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package parkirpintar.reservation.v1;
+
+option go_package = "github.com/farid/reservation-service/api/proto/reservation/v1;reservationv1";
+
+import "google/protobuf/timestamp.proto";
+
+// ReservationService is the s2s contract. The mini app does NOT call this directly;
+// it goes through the REST handler which forwards into the same usecase.
+service ReservationService {
+  rpc CreateReservation  (CreateReservationRequest)  returns (Reservation);
+  rpc ConfirmReservation (ConfirmReservationRequest) returns (Reservation);
+  rpc CancelReservation  (CancelReservationRequest)  returns (Reservation);
+  rpc CheckIn            (CheckInRequest)            returns (Reservation);
+  rpc CheckOut           (CheckOutRequest)           returns (Reservation);
+  rpc GetReservation     (GetReservationRequest)     returns (Reservation);
+  rpc GetAvailability    (GetAvailabilityRequest)    returns (GetAvailabilityResponse);
+}
+
+enum VehicleType {
+  VEHICLE_TYPE_UNSPECIFIED = 0;
+  CAR = 1;
+  MOTORCYCLE = 2;
+}
+
+enum ReservationState {
+  RESERVATION_STATE_UNSPECIFIED = 0;
+  PENDING = 1;
+  CONFIRMED = 2;
+  ACTIVE = 3;
+  COMPLETED = 4;
+  CANCELLED = 5;
+  EXPIRED = 6;
+}
+
+message Reservation {
+  string id = 1;
+  string driver_id = 2;
+  string spot_id = 3;
+  VehicleType vehicle_type = 4;
+  ReservationState state = 5;
+  google.protobuf.Timestamp hold_start = 6;
+  google.protobuf.Timestamp hold_end = 7;
+  google.protobuf.Timestamp confirmed_at = 8;
+  google.protobuf.Timestamp checked_in_at = 9;
+  google.protobuf.Timestamp checked_out_at = 10;
+  int32 version = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message CreateReservationRequest {
+  string driver_id = 1;
+  VehicleType vehicle_type = 2;
+  string mode = 3;                 // SYSTEM_ASSIGNED | USER_SELECTED
+  string preferred_spot_id = 4;    // required iff mode = USER_SELECTED
+}
+
+message ConfirmReservationRequest { string id = 1; }
+message CancelReservationRequest  { string id = 1; string reason = 2; }
+message CheckInRequest            { string id = 1; double latitude = 2; double longitude = 3; }
+message CheckOutRequest           { string id = 1; }
+message GetReservationRequest     { string id = 1; }
+
+message GetAvailabilityRequest    { VehicleType vehicle_type = 1; }
+message FloorAvailability         { int32 floor = 1; int32 count = 2; }
+message GetAvailabilityResponse {
+  int32 available_count = 1;
+  repeated FloorAvailability by_floor = 2;
+}
