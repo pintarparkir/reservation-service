@@ -41,9 +41,11 @@ CREATE TABLE IF NOT EXISTS reservation (
   version         int NOT NULL DEFAULT 1,
   created_at      timestamptz NOT NULL DEFAULT now(),
   updated_at      timestamptz NOT NULL DEFAULT now(),
+  -- PENDING is included so concurrent inserts on the same spot fail at insert
+  -- time, not at confirm time.
   CONSTRAINT no_overlapping_reservation EXCLUDE USING gist
     (spot_id WITH =, hold_window WITH &&)
-    WHERE (state IN ('CONFIRMED','ACTIVE'))
+    WHERE (state IN ('PENDING','CONFIRMED','ACTIVE'))
 );
 CREATE INDEX IF NOT EXISTS idx_reservation_driver_state ON reservation(driver_id, state);
 CREATE INDEX IF NOT EXISTS idx_reservation_expires_at   ON reservation(expires_at) WHERE state = 'CONFIRMED';

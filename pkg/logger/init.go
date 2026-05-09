@@ -7,7 +7,9 @@ import (
 )
 
 // NewLogger initialises the package-level zap logger.
-// Production env writes to JSON + rotates via lumberjack; local writes to console.
+//   - local env: console encoder, stdout only (no lumberjack — /var/log writes
+//     fail without root, and dev doesn't need rotated files anyway).
+//   - non-local: JSON encoder + stdout + rotated file under /var/log/<app>/app.log.
 func NewLogger(appName, appEnv string) error {
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.TimeKey = "ts"
@@ -20,14 +22,19 @@ func NewLogger(appName, appEnv string) error {
 		encoder = zapcore.NewJSONEncoder(encoderCfg)
 	}
 
-	rotator := &lumberjack.Logger{
-		Filename:   "/var/log/" + appName + "/app.log",
-		MaxSize:    100,
-		MaxBackups: 7,
-		MaxAge:     30,
-		Compress:   true,
+	var writer zapcore.WriteSyncer
+	if appEnv == "local" {
+		writer = zapcore.AddSync(consoleStdout())
+	} else {
+		rotator := &lumberjack.Logger{
+			Filename:   "/var/log/" + appName + "/app.log",
+			MaxSize:    100,
+			MaxBackups: 7,
+			MaxAge:     30,
+			Compress:   true,
+		}
+		writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(rotator), zapcore.AddSync(consoleStdout()))
 	}
-	writer := zapcore.NewMultiWriteSyncer(zapcore.AddSync(rotator), zapcore.AddSync(consoleStdout()))
 
 	core := zapcore.NewCore(encoder, writer, zapcore.InfoLevel)
 	instance = zap.New(core, zap.AddCaller(), zap.Fields(zap.String("app", appName), zap.String("env", appEnv)))
