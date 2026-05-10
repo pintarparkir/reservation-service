@@ -9,7 +9,7 @@
 | `05-no-show-expiry.md`            | ✅      | 1 h hold; worker auto-expires + emits event   |
 | `06-checkin-geofence.md`          | ✅      | Haversine, soft-fail on missing GPS           |
 | `07-outbox-publisher.md`          | ✅      | At-least-once event delivery to RabbitMQ      |
-| `08-billing-trigger.md`           | ⏳      | Stub client wired; real gRPC pending buf gen  |
+| `08-billing-trigger.md`           | ✅      | Real gRPC client to billing on Create; async close via outbox |
 | `09-rest-surface.md`              | ✅      | `/v1/availability`, `/v1/reservations*`       |
 
 Legend: 📋 planned · ⏳ in progress · ✅ shipped · 🚫 deferred

@@ -78,10 +78,32 @@ func main() {
 	spotRepo := resrepo.NewSpotRepository(db)
 	obRepo := resrepo.NewOutboxRepository(db)
 
+	// Billing client — pick gRPC or stub based on cfg.BillingMode. Default
+	// is gRPC; the stub keeps the dev loop working when billing-service
+	// isn't running.
+	var billing grpcclient.BillingClient
+	if cfg.BillingMode == "grpc" {
+		dialCtx, dialCancel := context.WithTimeout(ctx, 10*time.Second)
+		bConn, err := grpcclient.Dial(dialCtx, cfg.BillingGrpcAddr)
+		dialCancel()
+		if err != nil {
+			logger.Warn(ctx, "billing-service grpc dial failed; falling back to stub",
+				map[string]interface{}{"addr": cfg.BillingGrpcAddr, logger.ErrorKey: err.Error()})
+			billing = grpcclient.NewBillingStub()
+		} else {
+			defer bConn.Close()
+			billing = grpcclient.NewBillingGrpc(bConn)
+			logger.Info(ctx, "billing client: grpc", map[string]interface{}{"addr": cfg.BillingGrpcAddr})
+		}
+	} else {
+		billing = grpcclient.NewBillingStub()
+		logger.Info(ctx, "billing client: stub (BILLING_MODE != grpc)", nil)
+	}
+
 	uc := resuc.NewReservationUsecase(
 		resvRepo, spotRepo,
 		lock.New(cache),
-		grpcclient.NewBillingStub(), // swap for real client when billing-service ships
+		billing,
 		resuc.Config{
 			HoldDuration:         cfg.HoldDuration,
 			GeofenceRadiusMeters: cfg.GeofenceRadiusMeters,

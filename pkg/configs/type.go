@@ -29,6 +29,9 @@ type Config struct {
 
 	UserGrpcAddr    string `env:"USER_GRPC_ADDR" envDefault:"localhost:9094"`
 	BillingGrpcAddr string `env:"BILLING_GRPC_ADDR" envDefault:"localhost:9091"`
+	// BillingMode: "grpc" — call billing-service over gRPC (default for prod-like dev)
+	//              "stub" — log only; useful when billing isn't running yet
+	BillingMode string `env:"BILLING_MODE" envDefault:"grpc"`
 
 	OTLPEndpoint string `env:"OTLP_ENDPOINT" envDefault:"localhost:4317"`
 

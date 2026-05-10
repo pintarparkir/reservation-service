@@ -40,15 +40,24 @@ func (u *reservationUsecase) CheckIn(ctx context.Context, req model.CheckInReque
 }
 
 func (u *reservationUsecase) CheckOut(ctx context.Context, id string) (*model.Reservation, error) {
-	payload, _ := json.Marshal(map[string]any{"reservation_id": id})
-	r, err := u.repo.ApplyTransition(ctx, id, model.ActionCheckOut, model.EvtReservationCheckedOut, payload)
+	r, err := u.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Trigger billing close. Same logging-only failure mode as Create.
-	_ = u.billing.CloseInvoice(ctx, "stub-invoice-"+id)
-	return r, nil
+	// Embed timestamps in the outbox event so billing's RabbitMQ consumer can
+	// run the pricing engine with full session info. The consumer dispatches
+	// CloseInvoice on `reservation.checked_out.v1`; we don't call billing
+	// synchronously here — keeps the check-out path fast and decouples it
+	// from billing availability.
+	payload, _ := json.Marshal(map[string]any{
+		"reservation_id": id,
+		"confirmed_at":   r.ConfirmedAt,
+		"checked_in_at":  r.CheckedInAt,
+		// checked_out_at is set by the transition itself; consumer can
+		// recompute or read from a future GetReservation call.
+	})
+	return u.repo.ApplyTransition(ctx, id, model.ActionCheckOut, model.EvtReservationCheckedOut, payload)
 }
 
 func (u *reservationUsecase) Get(ctx context.Context, id string) (*model.Reservation, error) {

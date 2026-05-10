@@ -1,6 +1,6 @@
 # Feature 08 — Billing trigger
 
-**Status:** 📋 planned
+**Status:** ✅ shipped
 **Owner:** reservation-service (caller); billing-service owns the implementation
 
 ## Scope
