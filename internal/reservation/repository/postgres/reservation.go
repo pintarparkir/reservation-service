@@ -185,10 +185,11 @@ upd AS (
      SET state = 'EXPIRED', version = r.version + 1, updated_at = now()
     FROM expired e
    WHERE r.id = e.id
-  RETURNING r.id
+  RETURNING r.id, r.driver_id
 )
 INSERT INTO outbox_event (aggregate_type, aggregate_id, event_type, payload)
-SELECT 'reservation', upd.id, 'reservation.expired.v1', jsonb_build_object('reservation_id', upd.id)
+SELECT 'reservation', upd.id, 'reservation.expired.v1',
+       jsonb_build_object('reservation_id', upd.id, 'driver_id', upd.driver_id)
   FROM upd
 RETURNING aggregate_id
 `

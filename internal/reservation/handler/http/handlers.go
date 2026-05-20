@@ -1,17 +1,17 @@
 package http
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 
 	"github.com/farid/reservation-service/internal/reservation/model"
+	apperror "github.com/farid/reservation-service/pkg/error"
+	"github.com/farid/reservation-service/pkg/utils"
 )
 
 func (h *reservationHandler) getAvailability(c *gin.Context) {
 	vt := model.VehicleType(c.Query("type"))
 	if !model.IsValidVehicleType(vt) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "VALIDATION", "message": "type query must be CAR or MOTORCYCLE"})
+		renderError(c, &apperror.AppError{Code: "VALIDATION", Message: "type query must be CAR or MOTORCYCLE"})
 		return
 	}
 	floors, total, err := h.uc.Availability(c.Request.Context(), vt)
@@ -23,18 +23,18 @@ func (h *reservationHandler) getAvailability(c *gin.Context) {
 	for _, f := range floors {
 		resp.ByFloor = append(resp.ByFloor, byFloor{Floor: f.Floor, Count: f.Count})
 	}
-	c.JSON(http.StatusOK, resp)
+	utils.OK(c, resp, "availability retrieved")
 }
 
 func (h *reservationHandler) create(c *gin.Context) {
 	var body createReq
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "BAD_REQUEST", "message": err.Error()})
+		utils.Error(c, err)
 		return
 	}
 	idem := c.GetHeader("Idempotency-Key")
 	if idem == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "VALIDATION", "message": "Idempotency-Key required"})
+		renderError(c, &apperror.AppError{Code: "VALIDATION", Message: "Idempotency-Key required"})
 		return
 	}
 	out, err := h.uc.Create(c.Request.Context(), model.CreateReservationRequest{
@@ -48,7 +48,7 @@ func (h *reservationHandler) create(c *gin.Context) {
 		renderError(c, err)
 		return
 	}
-	c.JSON(http.StatusCreated, toDTO(out))
+	utils.Created(c, toDTO(out), "reservation created")
 }
 
 func (h *reservationHandler) get(c *gin.Context) {
@@ -57,7 +57,7 @@ func (h *reservationHandler) get(c *gin.Context) {
 		renderError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, toDTO(out))
+	utils.OK(c, toDTO(out), "reservation retrieved")
 }
 
 func (h *reservationHandler) confirm(c *gin.Context) {
@@ -66,7 +66,7 @@ func (h *reservationHandler) confirm(c *gin.Context) {
 		renderError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, toDTO(out))
+	utils.OK(c, toDTO(out), "reservation confirmed")
 }
 
 func (h *reservationHandler) cancel(c *gin.Context) {
@@ -77,13 +77,13 @@ func (h *reservationHandler) cancel(c *gin.Context) {
 		renderError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, toDTO(out))
+	utils.OK(c, toDTO(out), "reservation cancelled")
 }
 
 func (h *reservationHandler) checkIn(c *gin.Context) {
 	var body checkInReq
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "BAD_REQUEST", "message": err.Error()})
+		utils.Error(c, err)
 		return
 	}
 	out, err := h.uc.CheckIn(c.Request.Context(), model.CheckInRequest{
@@ -96,7 +96,7 @@ func (h *reservationHandler) checkIn(c *gin.Context) {
 		renderError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, toDTO(out))
+	utils.OK(c, toDTO(out), "checked in")
 }
 
 func (h *reservationHandler) checkOut(c *gin.Context) {
@@ -105,5 +105,5 @@ func (h *reservationHandler) checkOut(c *gin.Context) {
 		renderError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, toDTO(out))
+	utils.OK(c, toDTO(out), "checked out")
 }

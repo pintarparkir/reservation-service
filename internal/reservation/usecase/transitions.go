@@ -10,13 +10,25 @@ import (
 )
 
 func (u *reservationUsecase) Confirm(ctx context.Context, id string) (*model.Reservation, error) {
-	payload, _ := json.Marshal(map[string]any{"reservation_id": id})
+	r, err := u.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	payload, _ := json.Marshal(map[string]any{
+		"reservation_id": id,
+		"driver_id":      r.DriverID,
+	})
 	return u.repo.ApplyTransition(ctx, id, model.ActionConfirm, model.EvtReservationConfirmed, payload)
 }
 
 func (u *reservationUsecase) Cancel(ctx context.Context, req model.CancelRequest) (*model.Reservation, error) {
+	r, err := u.repo.GetByID(ctx, req.ID)
+	if err != nil {
+		return nil, err
+	}
 	payload, _ := json.Marshal(map[string]any{
 		"reservation_id": req.ID,
+		"driver_id":      r.DriverID,
 		"reason":         req.Reason,
 	})
 	return u.repo.ApplyTransition(ctx, req.ID, model.ActionCancel, model.EvtReservationCancelled, payload)
