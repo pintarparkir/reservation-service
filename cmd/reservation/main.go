@@ -49,7 +49,11 @@ func main() {
 	defer stop()
 
 	otel := pkgOtel.NewOpenTelemetry(cfg.OTLPEndpoint, "reservation", cfg.AppEnv)
-	defer func() { _ = otel.EndAPM() }()
+	defer func() {
+		if err := otel.EndAPM(); err != nil {
+			fmt.Fprintln(os.Stderr, "otel shutdown:", err)
+		}
+	}()
 
 	// ── Infra ────────────────────────────────────────────────────────────────
 	db, err := pgdb.NewPostgresDB(pgdb.PostgresDsn{
@@ -83,9 +87,7 @@ func main() {
 	// isn't running.
 	var billing grpcclient.BillingClient
 	if cfg.BillingMode == "grpc" {
-		dialCtx, dialCancel := context.WithTimeout(ctx, 10*time.Second)
-		bConn, err := grpcclient.Dial(dialCtx, cfg.BillingGrpcAddr)
-		dialCancel()
+		bConn, err := grpcclient.Dial(cfg.BillingGrpcAddr)
 		if err != nil {
 			logger.Warn(ctx, "billing-service grpc dial failed; falling back to stub",
 				map[string]interface{}{"addr": cfg.BillingGrpcAddr, logger.ErrorKey: err.Error()})
@@ -145,6 +147,10 @@ func main() {
 
 	shutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_ = httpSrv.Shutdown(shutCtx)
-	_ = logger.Sync()
+	if err := httpSrv.Shutdown(shutCtx); err != nil {
+		logger.Error(context.Background(), "http shutdown error", map[string]interface{}{logger.ErrorKey: err.Error()})
+	}
+	if err := logger.Sync(); err != nil {
+		fmt.Fprintln(os.Stderr, "logger sync:", err)
+	}
 }
