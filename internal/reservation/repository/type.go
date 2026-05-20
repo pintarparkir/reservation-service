@@ -17,7 +17,10 @@ type FloorCount struct {
 // ReservationRepository persists Reservation aggregates.
 // Insert + outbox append happen in the same TX inside the postgres impl.
 type ReservationRepository interface {
-	Create(ctx context.Context, r *model.Reservation, eventPayload []byte) (*model.Reservation, error)
+	// Create inserts the reservation and a `reservation.created.v1` outbox row
+	// in a single transaction. The outbox payload is built from the inserted
+	// row inside the SQL CTE so it always carries the real reservation_id.
+	Create(ctx context.Context, r *model.Reservation) (*model.Reservation, error)
 	GetByID(ctx context.Context, id string) (*model.Reservation, error)
 	// ApplyTransition flips state with optimistic-lock + outbox append, all in one tx.
 	ApplyTransition(ctx context.Context, id string, action model.Action, eventType string, eventPayload []byte) (*model.Reservation, error)

@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
@@ -10,6 +9,9 @@ import (
 	apperror "github.com/farid/reservation-service/pkg/error"
 )
 
+// Create persists the reservation and emits `reservation.created.v1` to the
+// outbox in a single transaction. Billing is opened asynchronously by the
+// billing-service consumer on that event (idempotency_key = reservation_id).
 func (u *reservationUsecase) Create(ctx context.Context, req model.CreateReservationRequest) (*model.Reservation, error) {
 	if err := validateCreate(req); err != nil {
 		return nil, err
@@ -46,7 +48,7 @@ func (u *reservationUsecase) Create(ctx context.Context, req model.CreateReserva
 
 	now := time.Now().UTC()
 	end := now.Add(u.cfg.HoldDuration)
-	r := &model.Reservation{
+	return u.repo.Create(ctx, &model.Reservation{
 		DriverID:       req.DriverID,
 		SpotID:         spotID,
 		VehicleType:    req.VehicleType,
@@ -55,30 +57,7 @@ func (u *reservationUsecase) Create(ctx context.Context, req model.CreateReserva
 		HoldEnd:        end,
 		ExpiresAt:      &end,
 		IdempotencyKey: req.IdempotencyKey,
-	}
-
-	payload, _ := json.Marshal(map[string]any{
-		"reservation_id": "<assigned-on-insert>",
-		"driver_id":      req.DriverID,
-		"spot_id":        spotID,
-		"vehicle_type":   req.VehicleType,
-		"hold_end":       end,
 	})
-
-	created, err := u.repo.Create(ctx, r, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	// Open invoice — idempotency-keyed on the same client key. Stub today; real
-	// gRPC client lands once billing-service ships (see ROADMAP.md).
-	if _, err := u.billing.OpenInvoice(ctx, created.ID, req.DriverID, req.IdempotencyKey); err != nil {
-		// We deliberately do NOT roll back the reservation: the outbox event will
-		// trigger billing async via the publisher. Log + continue.
-		// In the future, wrap this in a saga/compensating action.
-		return created, nil
-	}
-	return created, nil
 }
 
 func validateCreate(r model.CreateReservationRequest) error {

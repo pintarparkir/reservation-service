@@ -26,10 +26,29 @@ func NewReservationRepository(db *sqlx.DB) repository.ReservationRepository {
 	return &reservationRepo{db: db}
 }
 
+// insertReservationSQL inserts the reservation and the outbox event in a
+// single CTE. The outbox payload is built from the just-inserted row so it
+// always contains the real reservation_id (previous Go-side pre-marshal
+// embedded a placeholder string — billing consumed broken events).
 const insertReservationSQL = `
-INSERT INTO reservation (driver_id, spot_id, vehicle_type, state, hold_window, expires_at, idempotency_key)
-VALUES ($1, $2, $3, $4, tstzrange($5, $6, '[)'), $6, $7)
-RETURNING id, version, created_at, updated_at
+WITH ins AS (
+    INSERT INTO reservation (driver_id, spot_id, vehicle_type, state, hold_window, expires_at, idempotency_key)
+    VALUES ($1, $2, $3, $4, tstzrange($5, $6, '[)'), $6, $7)
+    RETURNING id, driver_id, spot_id, vehicle_type, version, created_at, updated_at
+),
+ob AS (
+    INSERT INTO outbox_event (aggregate_type, aggregate_id, event_type, payload)
+    SELECT 'reservation', ins.id, 'reservation.created.v1',
+           jsonb_build_object(
+             'reservation_id', ins.id,
+             'driver_id',      ins.driver_id,
+             'spot_id',        ins.spot_id,
+             'vehicle_type',   ins.vehicle_type,
+             'hold_end',       to_char($6::timestamptz AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+           )
+    FROM ins
+)
+SELECT id, version, created_at, updated_at FROM ins
 `
 
 const insertOutboxSQL = `
@@ -37,7 +56,7 @@ INSERT INTO outbox_event (aggregate_type, aggregate_id, event_type, payload)
 VALUES ('reservation', $1, $2, $3)
 `
 
-func (r *reservationRepo) Create(ctx context.Context, in *model.Reservation, eventPayload []byte) (*model.Reservation, error) {
+func (r *reservationRepo) Create(ctx context.Context, in *model.Reservation) (*model.Reservation, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -51,10 +70,6 @@ func (r *reservationRepo) Create(ctx context.Context, in *model.Reservation, eve
 	).Scan(&out.ID, &out.Version, &out.CreatedAt, &out.UpdatedAt)
 	if err != nil {
 		return nil, mapInsertErr(err)
-	}
-
-	if _, err := tx.ExecContext(ctx, insertOutboxSQL, out.ID, model.EvtReservationCreated, eventPayload); err != nil {
-		return nil, err
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, err

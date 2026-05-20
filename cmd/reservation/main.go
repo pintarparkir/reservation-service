@@ -32,7 +32,6 @@ import (
 
 	"github.com/farid/reservation-service/pkg/configs"
 	pgdb "github.com/farid/reservation-service/pkg/db/postgres"
-	"github.com/farid/reservation-service/pkg/grpcclient"
 	"github.com/farid/reservation-service/pkg/lock"
 	"github.com/farid/reservation-service/pkg/logger"
 	pkgOtel "github.com/farid/reservation-service/pkg/otel"
@@ -82,30 +81,13 @@ func main() {
 	spotRepo := resrepo.NewSpotRepository(db)
 	obRepo := resrepo.NewOutboxRepository(db)
 
-	// Billing client — pick gRPC or stub based on cfg.BillingMode. Default
-	// is gRPC; the stub keeps the dev loop working when billing-service
-	// isn't running.
-	var billing grpcclient.BillingClient
-	if cfg.BillingMode == "grpc" {
-		bConn, err := grpcclient.Dial(cfg.BillingGrpcAddr)
-		if err != nil {
-			logger.Warn(ctx, "billing-service grpc dial failed; falling back to stub",
-				map[string]interface{}{"addr": cfg.BillingGrpcAddr, logger.ErrorKey: err.Error()})
-			billing = grpcclient.NewBillingStub()
-		} else {
-			defer bConn.Close()
-			billing = grpcclient.NewBillingGrpc(bConn)
-			logger.Info(ctx, "billing client: grpc", map[string]interface{}{"addr": cfg.BillingGrpcAddr})
-		}
-	} else {
-		billing = grpcclient.NewBillingStub()
-		logger.Info(ctx, "billing client: stub (BILLING_MODE != grpc)", nil)
-	}
+	// Billing is reached asynchronously via the outbox/RabbitMQ pipeline;
+	// no synchronous gRPC client is wired into the usecase. The async path
+	// is documented in docs/architecture/service-communication/.
 
 	uc := resuc.NewReservationUsecase(
 		resvRepo, spotRepo,
 		lock.New(cache),
-		billing,
 		resuc.Config{
 			HoldDuration:         cfg.HoldDuration,
 			GeofenceRadiusMeters: cfg.GeofenceRadiusMeters,

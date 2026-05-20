@@ -7,7 +7,6 @@ import (
 
 	"github.com/farid/reservation-service/internal/reservation/model"
 	"github.com/farid/reservation-service/internal/reservation/repository"
-	"github.com/farid/reservation-service/pkg/grpcclient"
 	"github.com/farid/reservation-service/pkg/lock"
 )
 
@@ -25,7 +24,6 @@ type reservationUsecase struct {
 	repo     repository.ReservationRepository
 	spotRepo repository.SpotRepository
 	lock     *lock.Lock
-	billing  grpcclient.BillingClient
 	cfg      Config
 }
 
@@ -38,15 +36,18 @@ type Config struct {
 }
 
 // NewReservationUsecase wires the usecase struct.
+//
+// Billing is reached asynchronously: Create only inserts the reservation +
+// `reservation.created.v1` outbox row; billing-service consumes the event and
+// opens the invoice idempotently. See docs/architecture/service-communication.
 func NewReservationUsecase(
 	repo repository.ReservationRepository,
 	spotRepo repository.SpotRepository,
 	l *lock.Lock,
-	billing grpcclient.BillingClient,
 	cfg Config,
 ) ReservationUsecase {
 	return &reservationUsecase{
 		repo: repo, spotRepo: spotRepo, lock: l,
-		billing: billing, cfg: cfg,
+		cfg: cfg,
 	}
 }
