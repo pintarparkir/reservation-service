@@ -1,3 +1,4 @@
+// Package mock provides test doubles for reservation repository interfaces.
 package mock
 
 import (

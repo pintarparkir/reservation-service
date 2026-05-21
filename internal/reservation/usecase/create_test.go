@@ -49,11 +49,13 @@ func (f *fakeCache) Eval(ctx context.Context, script string, keys []string, args
 	}
 	return int64(1), nil
 }
-func (f *fakeCache) Incr(ctx context.Context, key string) (int64, error)              { return 1, nil }
-func (f *fakeCache) Expire(ctx context.Context, key string, ttl time.Duration) error  { return nil }
-func (f *fakeCache) TTL(ctx context.Context, key string) (time.Duration, error)       { return time.Minute, nil }
-func (f *fakeCache) Ping(ctx context.Context) error                                   { return nil }
-func (f *fakeCache) Raw() *goredis.Client                                             { return nil }
+func (f *fakeCache) Incr(ctx context.Context, key string) (int64, error)             { return 1, nil }
+func (f *fakeCache) Expire(ctx context.Context, key string, ttl time.Duration) error { return nil }
+func (f *fakeCache) TTL(ctx context.Context, key string) (time.Duration, error) {
+	return time.Minute, nil
+}
+func (f *fakeCache) Ping(ctx context.Context) error { return nil }
+func (f *fakeCache) Raw() *goredis.Client           { return nil }
 
 var _ redis.Collections = (*fakeCache)(nil)
 

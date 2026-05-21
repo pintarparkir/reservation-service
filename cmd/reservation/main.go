@@ -102,6 +102,7 @@ func main() {
 	// ── Background workers ───────────────────────────────────────────────────
 	go worker.NewNoShowExpirer(resvRepo).Run(ctx)
 	go worker.NewOutboxPublisher(obRepo, publisher).Run(ctx)
+	go worker.NewReconciler(db).Run(ctx)
 
 	// ── HTTP server ──────────────────────────────────────────────────────────
 	if cfg.AppEnv == "local" {
