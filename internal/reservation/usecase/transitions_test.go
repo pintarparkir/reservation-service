@@ -223,3 +223,36 @@ func TestCheckOut_InvalidState(t *testing.T) {
 	assert.Nil(t, result)
 	resRepo.AssertExpectations(t)
 }
+
+// ── Get tests ────────────────────────────────────────────────────────────────
+
+func TestGet_HappyPath(t *testing.T) {
+	ctx := context.Background()
+	resRepo := new(mockrepo.MockReservationRepository)
+
+	reservation := &model.Reservation{ID: "res-11", State: model.StatePending, DriverID: "drv-11"}
+	resRepo.On("GetByID", ctx, "res-11").Return(reservation, nil)
+
+	uc := usecase.NewReservationUsecase(resRepo, nil, nil, usecase.Config{})
+
+	result, err := uc.Get(ctx, "res-11")
+
+	require.NoError(t, err)
+	assert.Equal(t, reservation, result)
+	resRepo.AssertExpectations(t)
+}
+
+func TestGet_PropagatesRepoError(t *testing.T) {
+	ctx := context.Background()
+	resRepo := new(mockrepo.MockReservationRepository)
+
+	resRepo.On("GetByID", ctx, "missing").Return(nil, assert.AnError)
+
+	uc := usecase.NewReservationUsecase(resRepo, nil, nil, usecase.Config{})
+
+	result, err := uc.Get(ctx, "missing")
+
+	require.Error(t, err)
+	assert.Nil(t, result)
+	resRepo.AssertExpectations(t)
+}
