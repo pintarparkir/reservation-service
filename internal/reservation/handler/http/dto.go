@@ -7,19 +7,19 @@ import (
 )
 
 type reservationDTO struct {
-	ID            string     `json:"id"`
-	DriverID      string     `json:"driver_id"`
-	SpotID        string     `json:"spot_id"`
-	VehicleType   string     `json:"vehicle_type"`
-	State         string     `json:"state"`
-	HoldStart     time.Time  `json:"hold_start"`
-	HoldEnd       time.Time  `json:"hold_end"`
-	ConfirmedAt   *time.Time `json:"confirmed_at,omitempty"`
-	CheckedInAt   *time.Time `json:"checked_in_at,omitempty"`
-	CheckedOutAt  *time.Time `json:"checked_out_at,omitempty"`
-	ExpiresAt     *time.Time `json:"expires_at,omitempty"`
-	Version       int        `json:"version"`
-	CreatedAt     time.Time  `json:"created_at"`
+	ID           string     `json:"id"`
+	DriverID     string     `json:"driver_id"`
+	SpotID       string     `json:"spot_id"`
+	VehicleType  string     `json:"vehicle_type"`
+	State        string     `json:"state"`
+	HoldStart    time.Time  `json:"hold_start"`
+	HoldEnd      time.Time  `json:"hold_end"`
+	ConfirmedAt  *time.Time `json:"confirmed_at,omitempty"`
+	CheckedInAt  *time.Time `json:"checked_in_at,omitempty"`
+	CheckedOutAt *time.Time `json:"checked_out_at,omitempty"`
+	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+	Version      int        `json:"version"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 func toDTO(r *model.Reservation) *reservationDTO {
@@ -55,8 +55,8 @@ type checkInReq struct {
 }
 
 type availabilityResp struct {
-	AvailableCount int             `json:"available_count"`
-	ByFloor        []byFloor       `json:"by_floor"`
+	AvailableCount int       `json:"available_count"`
+	ByFloor        []byFloor `json:"by_floor"`
 }
 
 type byFloor struct {

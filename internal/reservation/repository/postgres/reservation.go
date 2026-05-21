@@ -125,10 +125,10 @@ func (r *reservationRepo) FindByIdempotencyKey(ctx context.Context, key string) 
 }
 
 // ApplyTransition does:
-//   1. SELECT current state + version (FOR UPDATE).
-//   2. Compute next via model.Next; bail with INVALID_STATE on illegal.
-//   3. UPDATE state, version+1, plus per-action timestamp columns.
-//   4. INSERT outbox_event in the same tx.
+//  1. SELECT current state + version (FOR UPDATE).
+//  2. Compute next via model.Next; bail with INVALID_STATE on illegal.
+//  3. UPDATE state, version+1, plus per-action timestamp columns.
+//  4. INSERT outbox_event in the same tx.
 func (r *reservationRepo) ApplyTransition(ctx context.Context, id string, action model.Action, eventType string, payload []byte) (*model.Reservation, error) {
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -228,21 +228,21 @@ func (r *reservationRepo) ExpireDueReservations(ctx context.Context, limit int) 
 
 // reservationRow is the scannable shape mirroring getByIDSQL columns.
 type reservationRow struct {
-	ID             string         `db:"id"`
-	DriverID       string         `db:"driver_id"`
-	SpotID         string         `db:"spot_id"`
-	VehicleType    string         `db:"vehicle_type"`
-	State          string         `db:"state"`
-	HoldStart      pq.NullTime    `db:"hold_start"`
-	HoldEnd        pq.NullTime    `db:"hold_end"`
-	ConfirmedAt    pq.NullTime    `db:"confirmed_at"`
-	CheckedInAt    pq.NullTime    `db:"checked_in_at"`
-	CheckedOutAt   pq.NullTime    `db:"checked_out_at"`
-	ExpiresAt      pq.NullTime    `db:"expires_at"`
-	IdempotencyKey string         `db:"idempotency_key"`
-	Version        int            `db:"version"`
-	CreatedAt      pq.NullTime    `db:"created_at"`
-	UpdatedAt      pq.NullTime    `db:"updated_at"`
+	ID             string      `db:"id"`
+	DriverID       string      `db:"driver_id"`
+	SpotID         string      `db:"spot_id"`
+	VehicleType    string      `db:"vehicle_type"`
+	State          string      `db:"state"`
+	HoldStart      pq.NullTime `db:"hold_start"`
+	HoldEnd        pq.NullTime `db:"hold_end"`
+	ConfirmedAt    pq.NullTime `db:"confirmed_at"`
+	CheckedInAt    pq.NullTime `db:"checked_in_at"`
+	CheckedOutAt   pq.NullTime `db:"checked_out_at"`
+	ExpiresAt      pq.NullTime `db:"expires_at"`
+	IdempotencyKey string      `db:"idempotency_key"`
+	Version        int         `db:"version"`
+	CreatedAt      pq.NullTime `db:"created_at"`
+	UpdatedAt      pq.NullTime `db:"updated_at"`
 }
 
 func (r *reservationRow) toModel() *model.Reservation {

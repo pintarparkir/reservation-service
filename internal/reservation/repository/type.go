@@ -44,7 +44,7 @@ type OutboxRepository interface {
 }
 
 type OutboxRow struct {
-	ID         int64  `db:"id"`
-	EventType  string `db:"event_type"`
-	Payload    []byte `db:"payload"`
+	ID        int64  `db:"id"`
+	EventType string `db:"event_type"`
+	Payload   []byte `db:"payload"`
 }

@@ -45,8 +45,8 @@ func (u *reservationUsecase) CheckIn(ctx context.Context, req model.CheckInReque
 		}
 	}
 	payload, _ := json.Marshal(map[string]any{
-		"reservation_id":   req.ID,
-		"gps_unavailable":  req.GPSUnavailable,
+		"reservation_id":  req.ID,
+		"gps_unavailable": req.GPSUnavailable,
 	})
 	return u.repo.ApplyTransition(ctx, req.ID, model.ActionCheckIn, model.EvtReservationCheckedIn, payload)
 }

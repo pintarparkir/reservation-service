@@ -17,10 +17,10 @@ type CreateReservationRequest struct {
 
 // CheckInRequest carries GPS coords + the soft-fail flag for missing GPS.
 type CheckInRequest struct {
-	ID              string
-	Latitude        float64
-	Longitude       float64
-	GPSUnavailable  bool
+	ID             string
+	Latitude       float64
+	Longitude      float64
+	GPSUnavailable bool
 }
 
 // CancelRequest captures cancel reason for audit / pricing engine input.

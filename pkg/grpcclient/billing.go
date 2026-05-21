@@ -10,7 +10,7 @@ import (
 // Implementations:
 //   - billingStub      — for local dev / tests; logs the call and returns synthetic IDs.
 //   - billingGrpc (TBD)— wraps the generated billingv1.BillingServiceClient. Lands once
-//                        `buf generate` is wired into CI (see roadmap).
+//     `buf generate` is wired into CI (see roadmap).
 type BillingClient interface {
 	OpenInvoice(ctx context.Context, reservationID, driverID, idempotencyKey string) (invoiceID string, err error)
 	CloseInvoice(ctx context.Context, invoiceID string) error

@@ -24,10 +24,10 @@ func RegisterReservationHandler(rg *gin.RouterGroup, uc usecase.ReservationUseca
 	res := rg.Group("/reservations")
 	res.Use(h.jwtMiddleware())
 
-	res.POST("",                h.create)
-	res.GET("/:id",             h.get)
-	res.POST("/:id/confirm",    h.confirm)
-	res.POST("/:id/cancel",     h.cancel)
-	res.POST("/:id/check-in",   h.checkIn)
-	res.POST("/:id/check-out",  h.checkOut)
+	res.POST("", h.create)
+	res.GET("/:id", h.get)
+	res.POST("/:id/confirm", h.confirm)
+	res.POST("/:id/cancel", h.cancel)
+	res.POST("/:id/check-in", h.checkIn)
+	res.POST("/:id/check-out", h.checkOut)
 }
