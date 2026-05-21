@@ -2,9 +2,12 @@
 package http
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/farid/reservation-service/internal/reservation/usecase"
+	"github.com/farid/reservation-service/pkg/rate"
 )
 
 const ctxDriverID = "driver_id"
@@ -16,7 +19,8 @@ type reservationHandler struct {
 
 // RegisterReservationHandler mounts mini-app REST routes under rg.
 // All routes except /availability require auth. Idempotency-Key header required on writes.
-func RegisterReservationHandler(rg *gin.RouterGroup, uc usecase.ReservationUsecase, jwtPubKeyPEM string) {
+// lim may be nil; rate limiting is skipped when nil or on Redis errors (fail-open).
+func RegisterReservationHandler(rg *gin.RouterGroup, uc usecase.ReservationUsecase, jwtPubKeyPEM string, lim rate.Limiter) {
 	h := &reservationHandler{uc: uc, jwtKey: jwtPubKeyPEM}
 
 	rg.GET("/availability", h.jwtMiddleware(), h.getAvailability)
@@ -24,7 +28,7 @@ func RegisterReservationHandler(rg *gin.RouterGroup, uc usecase.ReservationUseca
 	res := rg.Group("/reservations")
 	res.Use(h.jwtMiddleware())
 
-	res.POST("", h.create)
+	res.POST("", rateLimitDriver(lim, "reservations:create", 10, time.Minute), h.create)
 	res.GET("/:id", h.get)
 	res.POST("/:id/confirm", h.confirm)
 	res.POST("/:id/cancel", h.cancel)

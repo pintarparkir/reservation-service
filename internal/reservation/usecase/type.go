@@ -3,10 +3,12 @@ package usecase
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/farid/reservation-service/internal/reservation/model"
 	"github.com/farid/reservation-service/internal/reservation/repository"
+	"github.com/farid/reservation-service/pkg/grpcclient"
 	"github.com/farid/reservation-service/pkg/lock"
 )
 
@@ -25,6 +27,7 @@ type reservationUsecase struct {
 	spotRepo repository.SpotRepository
 	lock     *lock.Lock
 	cfg      Config
+	users    grpcclient.UserClient
 }
 
 // Config carries the runtime knobs the usecase needs at boot.
@@ -50,4 +53,20 @@ func NewReservationUsecase(
 		repo: repo, spotRepo: spotRepo, lock: l,
 		cfg: cfg,
 	}
+}
+
+func (u *reservationUsecase) WithUserClient(users grpcclient.UserClient) *reservationUsecase {
+	u.users = users
+	return u
+}
+
+func (u *reservationUsecase) lookupMSISDN(ctx context.Context, driverID string) string {
+	if u.users == nil || driverID == "" {
+		return ""
+	}
+	msisdn, err := u.users.GetMSISDN(ctx, driverID)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(msisdn)
 }

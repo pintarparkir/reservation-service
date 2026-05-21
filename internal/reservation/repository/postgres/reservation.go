@@ -214,7 +214,7 @@ func (r *reservationRepo) ExpireDueReservations(ctx context.Context, limit int) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var ids []string
 	for rows.Next() {
 		var id string
@@ -287,7 +287,8 @@ func (r *reservationRow) toModel() *model.Reservation {
 }
 
 func mapInsertErr(err error) error {
-	if pgErr, ok := err.(*pq.Error); ok {
+	var pgErr *pq.Error
+	if errors.As(err, &pgErr) {
 		switch string(pgErr.Code) {
 		case codeExclusionViolation:
 			return apperror.ErrDoubleBook

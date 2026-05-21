@@ -14,10 +14,14 @@ func (u *reservationUsecase) Confirm(ctx context.Context, id string) (*model.Res
 	if err != nil {
 		return nil, err
 	}
-	payload, _ := json.Marshal(map[string]any{
+	payloadMap := map[string]any{
 		"reservation_id": id,
 		"driver_id":      r.DriverID,
-	})
+	}
+	if msisdn := u.lookupMSISDN(ctx, r.DriverID); msisdn != "" {
+		payloadMap["msisdn"] = msisdn
+	}
+	payload, _ := json.Marshal(payloadMap)
 	return u.repo.ApplyTransition(ctx, id, model.ActionConfirm, model.EvtReservationConfirmed, payload)
 }
 
@@ -26,11 +30,15 @@ func (u *reservationUsecase) Cancel(ctx context.Context, req model.CancelRequest
 	if err != nil {
 		return nil, err
 	}
-	payload, _ := json.Marshal(map[string]any{
+	payloadMap := map[string]any{
 		"reservation_id": req.ID,
 		"driver_id":      r.DriverID,
 		"reason":         req.Reason,
-	})
+	}
+	if msisdn := u.lookupMSISDN(ctx, r.DriverID); msisdn != "" {
+		payloadMap["msisdn"] = msisdn
+	}
+	payload, _ := json.Marshal(payloadMap)
 	return u.repo.ApplyTransition(ctx, req.ID, model.ActionCancel, model.EvtReservationCancelled, payload)
 }
 

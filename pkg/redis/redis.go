@@ -19,6 +19,9 @@ type Collections interface {
 	SetNX(ctx context.Context, key string, value interface{}, ttl time.Duration) (bool, error)
 	Del(ctx context.Context, keys ...string) error
 	Eval(ctx context.Context, script string, keys []string, args ...interface{}) (interface{}, error)
+	Incr(ctx context.Context, key string) (int64, error)
+	Expire(ctx context.Context, key string, ttl time.Duration) error
+	TTL(ctx context.Context, key string) (time.Duration, error)
 	Ping(ctx context.Context) error
 	Raw() *redis.Client
 }
@@ -66,6 +69,18 @@ func (r *redisAdapter) Eval(ctx context.Context, script string, keys []string, a
 		pks[i] = r.prefix + k
 	}
 	return r.client.Eval(ctx, script, pks, args...).Result()
+}
+
+func (r *redisAdapter) Incr(ctx context.Context, key string) (int64, error) {
+	return r.client.Incr(ctx, r.prefix+key).Result()
+}
+
+func (r *redisAdapter) Expire(ctx context.Context, key string, ttl time.Duration) error {
+	return r.client.Expire(ctx, r.prefix+key, ttl).Err()
+}
+
+func (r *redisAdapter) TTL(ctx context.Context, key string) (time.Duration, error) {
+	return r.client.TTL(ctx, r.prefix+key).Result()
 }
 
 func (r *redisAdapter) Ping(ctx context.Context) error { return r.client.Ping(ctx).Err() }

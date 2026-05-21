@@ -36,6 +36,7 @@ import (
 	"github.com/farid/reservation-service/pkg/logger"
 	pkgOtel "github.com/farid/reservation-service/pkg/otel"
 	"github.com/farid/reservation-service/pkg/rabbit"
+	"github.com/farid/reservation-service/pkg/rate"
 	pkgRedis "github.com/farid/reservation-service/pkg/redis"
 )
 
@@ -62,13 +63,15 @@ func main() {
 	if err != nil {
 		logger.Fatal(ctx, "postgres init failed", map[string]interface{}{logger.ErrorKey: err.Error()})
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	cache := pkgRedis.InitConnection(cfg.RedisDB, cfg.RedisHost, cfg.RedisPort, cfg.RedisPassword, cfg.RedisAppConfig)
-	if err := cache.Ping(ctx); err != nil {
+	if pingErr := cache.Ping(ctx); pingErr != nil {
 		logger.Warn(ctx, "redis ping failed (continuing degraded)",
-			map[string]interface{}{logger.ErrorKey: err.Error()})
+			map[string]interface{}{logger.ErrorKey: pingErr.Error()})
 	}
+
+	limiter := rate.New(cache)
 
 	publisher, err := rabbit.NewPublisher(cfg.RabbitURL, cfg.RabbitExchange)
 	if err != nil {
@@ -109,7 +112,7 @@ func main() {
 	router := gin.New()
 	router.Use(gin.Recovery(), cors.Default())
 	router.GET("/healthz", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
-	reshttp.RegisterReservationHandler(router.Group("/v1"), uc, cfg.SuperAppJWTPubKey)
+	reshttp.RegisterReservationHandler(router.Group("/v1"), uc, cfg.SuperAppJWTPubKey, limiter)
 
 	httpSrv := &http.Server{
 		Addr:              ":" + cfg.AppPort,

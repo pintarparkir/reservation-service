@@ -15,11 +15,11 @@ import (
 // NewBillingGrpc returns a BillingClient backed by the real
 // billingv1.BillingServiceClient. Use this once billing-service is up.
 // Falls back gracefully via the standard gobreaker / timeout patterns —
-// per-call deadline is hard-coded to 5s for now (configurable later).
+// per-call deadline is hard-coded to 3s for now (configurable later).
 func NewBillingGrpc(conn *grpc.ClientConn) BillingClient {
 	return &billingGrpc{
 		pb:      billingv1.NewBillingServiceClient(conn),
-		timeout: 5 * time.Second,
+		timeout: 3 * time.Second,
 	}
 }
 
@@ -38,7 +38,7 @@ func (c *billingGrpc) OpenInvoice(ctx context.Context, reservationID, driverID, 
 		// Use the same canonical header name billing's interceptor reads.
 		// gRPC normalises metadata keys to lowercase; matching constants on
 		// both sides removes that as a source of bugs.
-		cctx = metadata.AppendToOutgoingContext(cctx, utils.HEADER_IDEMPOTENCY_KEY, idem)
+		cctx = metadata.AppendToOutgoingContext(cctx, utils.HeaderIdempotencyKey, idem)
 	}
 	resp, err := c.pb.OpenInvoice(cctx, &billingv1.OpenInvoiceRequest{
 		ReservationId: reservationID,

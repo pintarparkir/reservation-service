@@ -73,7 +73,7 @@ func (r *spotRepo) AvailabilityByFloor(ctx context.Context, vt model.VehicleType
 	if err != nil {
 		return nil, 0, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []repository.FloorCount
 	total := 0
 	for rows.Next() {

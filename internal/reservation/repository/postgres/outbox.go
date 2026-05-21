@@ -1,3 +1,4 @@
+// Package postgres implements reservation repository using PostgreSQL.
 package postgres
 
 import (
@@ -31,7 +32,7 @@ func (r *outboxRepo) FetchUnpublished(ctx context.Context, limit int) ([]reposit
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []repository.OutboxRow
 	for rows.Next() {
 		var r repository.OutboxRow
