@@ -81,6 +81,8 @@ See [`docs/architecture/erd/02-reservation-service.md`](../docs/architecture/erd
 - EXCLUDE constraint for double-book prevention
 - Critical indexes
 
+![ParkirPintar ERD](../user-service/ERD.jpg)
+
 ## API Reference
 
 ### REST Endpoints (mini-app, all require `Authorization: Bearer <jwt>`)
@@ -179,8 +181,8 @@ git clone <repo> && cd <repo>
 cd reservation-service
 cp configs/.env.example configs/.env
 
-# 2. Start shared infra (from repo root)
-cd ../infra && docker compose up -d
+# 2. Start shared infra (see https://github.com/pintarparkir/infra)
+cd ../infra && podman compose up -d
 
 # 3. Run migrations
 cd ../reservation-service
@@ -297,6 +299,7 @@ Background worker expires reservations older than 1 hour (HOLD_DURATION_MINUTES)
 ## Related Documentation
 
 - **Architecture Overview:** [`../docs/README.md`](../docs/README.md)
+- **Shared Infra Docs:** [`infra`](https://github.com/pintarparkir/infra)
 - **API Documentation:** [`../docs/api-documentation/00-overview.md`](../docs/api-documentation/00-overview.md)
 - **Implementation Backlog:** [`../docs/implementation-todo/00-backlog.md`](../docs/implementation-todo/00-backlog.md)
 
