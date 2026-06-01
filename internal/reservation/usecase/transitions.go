@@ -7,6 +7,7 @@ import (
 	"github.com/farid/reservation-service/internal/reservation/model"
 	apperror "github.com/farid/reservation-service/pkg/error"
 	"github.com/farid/reservation-service/pkg/geo"
+	"github.com/farid/reservation-service/pkg/grpcclient"
 )
 
 func (u *reservationUsecase) Confirm(ctx context.Context, id string) (*model.Reservation, error) {
@@ -14,15 +15,46 @@ func (u *reservationUsecase) Confirm(ctx context.Context, id string) (*model.Res
 	if err != nil {
 		return nil, err
 	}
+
+	method := "QRIS"
+	ccToken := ""
+	if u.users != nil {
+		pm, err := u.users.GetDefaultPaymentMethod(ctx, r.DriverID)
+		if err == nil && pm != nil && pm.Type == "CC" {
+			method = "CC"
+			ccToken = pm.CCToken
+		}
+	}
+
+	bookingFee := u.cfg.BookingFeeIDR
+	if bookingFee == 0 {
+		bookingFee = 5000
+	}
+
+	if u.billing != nil {
+		_, err := u.billing.CreatePaymentRequest(ctx, grpcclient.CreatePaymentRequest{
+			ReservationID: id,
+			DriverID:      r.DriverID,
+			AmountIDR:     bookingFee,
+			Method:        method,
+			CCToken:       ccToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	payloadMap := map[string]any{
-		"reservation_id": id,
-		"driver_id":      r.DriverID,
+		"reservation_id":  id,
+		"driver_id":       r.DriverID,
+		"payment_method":  method,
+		"booking_fee_idr": bookingFee,
 	}
 	if msisdn := u.lookupMSISDN(ctx, r.DriverID); msisdn != "" {
 		payloadMap["msisdn"] = msisdn
 	}
 	payload, _ := json.Marshal(payloadMap)
-	return u.repo.ApplyTransition(ctx, id, model.ActionConfirm, model.EvtReservationConfirmed, payload)
+	return u.repo.ApplyTransition(ctx, id, model.ActionConfirm, model.EvtReservationPaymentPending, payload)
 }
 
 func (u *reservationUsecase) Cancel(ctx context.Context, req model.CancelRequest) (*model.Reservation, error) {

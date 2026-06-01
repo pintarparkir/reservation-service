@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/farid/reservation-service/pkg/grpcclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,6 +16,10 @@ type stubUserClient struct {
 
 func (s stubUserClient) GetMSISDN(context.Context, string) (string, error) {
 	return s.msisdn, s.err
+}
+
+func (s stubUserClient) GetDefaultPaymentMethod(context.Context, string) (*grpcclient.PaymentMethod, error) {
+	return nil, nil
 }
 
 func TestReservationUsecase_WithUserClient_ReturnsSameUsecase(t *testing.T) {

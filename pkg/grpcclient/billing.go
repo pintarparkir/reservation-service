@@ -14,6 +14,23 @@ import (
 type BillingClient interface {
 	OpenInvoice(ctx context.Context, reservationID, driverID, idempotencyKey string) (invoiceID string, err error)
 	CloseInvoice(ctx context.Context, invoiceID string) error
+	CreatePaymentRequest(ctx context.Context, req CreatePaymentRequest) (*PaymentRequest, error)
+}
+
+type CreatePaymentRequest struct {
+	ReservationID string
+	DriverID      string
+	AmountIDR     int64
+	Method        string
+	CCToken       string
+}
+
+type PaymentRequest struct {
+	ID        string
+	Method    string
+	Status    string
+	QRISURL   string
+	ExpiresAt int64
 }
 
 // NewBillingStub returns a BillingClient that logs but never errors.
@@ -34,4 +51,20 @@ func (s *billingStub) OpenInvoice(ctx context.Context, reservationID, driverID, 
 func (s *billingStub) CloseInvoice(ctx context.Context, invoiceID string) error {
 	logger.Info(ctx, "[billing-stub] CloseInvoice", map[string]interface{}{"invoice_id": invoiceID})
 	return nil
+}
+
+func (s *billingStub) CreatePaymentRequest(ctx context.Context, req CreatePaymentRequest) (*PaymentRequest, error) {
+	logger.Info(ctx, "[billing-stub] CreatePaymentRequest", map[string]interface{}{
+		"reservation_id": req.ReservationID,
+		"driver_id":      req.DriverID,
+		"amount_idr":     req.AmountIDR,
+		"method":         req.Method,
+	})
+	return &PaymentRequest{
+		ID:        "stub-payment-" + req.ReservationID,
+		Method:    req.Method,
+		Status:    "PENDING",
+		QRISURL:   "https://qris.stub/pay/" + req.ReservationID,
+		ExpiresAt: 0,
+	}, nil
 }

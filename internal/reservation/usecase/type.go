@@ -28,11 +28,14 @@ type reservationUsecase struct {
 	lock     *lock.Lock
 	cfg      Config
 	users    grpcclient.UserClient
+	billing  grpcclient.BillingClient
 }
 
 // Config carries the runtime knobs the usecase needs at boot.
 type Config struct {
 	HoldDuration         time.Duration
+	PaymentTTL           time.Duration
+	BookingFeeIDR        int64
 	GeofenceRadiusMeters float64
 	BuildingLat          float64
 	BuildingLng          float64
@@ -57,6 +60,11 @@ func NewReservationUsecase(
 
 func (u *reservationUsecase) WithUserClient(users grpcclient.UserClient) *reservationUsecase {
 	u.users = users
+	return u
+}
+
+func (u *reservationUsecase) WithBillingClient(billing grpcclient.BillingClient) *reservationUsecase {
+	u.billing = billing
 	return u
 }
 

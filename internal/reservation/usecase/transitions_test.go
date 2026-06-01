@@ -19,18 +19,18 @@ func TestConfirm_HappyPath(t *testing.T) {
 	resRepo := new(mockrepo.MockReservationRepository)
 
 	pending := &model.Reservation{ID: "res-1", State: model.StatePending, DriverID: "drv-1"}
-	confirmed := &model.Reservation{ID: "res-1", State: model.StateConfirmed, DriverID: "drv-1"}
+	pendingPayment := &model.Reservation{ID: "res-1", State: model.StatePendingPayment, DriverID: "drv-1"}
 
 	resRepo.On("GetByID", ctx, "res-1").Return(pending, nil)
-	resRepo.On("ApplyTransition", ctx, "res-1", model.ActionConfirm, model.EvtReservationConfirmed, mock.Anything).
-		Return(confirmed, nil)
+	resRepo.On("ApplyTransition", ctx, "res-1", model.ActionConfirm, model.EvtReservationPaymentPending, mock.Anything).
+		Return(pendingPayment, nil)
 
 	uc := usecase.NewReservationUsecase(resRepo, nil, nil, usecase.Config{})
 
 	result, err := uc.Confirm(ctx, "res-1")
 
 	require.NoError(t, err)
-	assert.Equal(t, model.StateConfirmed, result.State)
+	assert.Equal(t, model.StatePendingPayment, result.State)
 	resRepo.AssertExpectations(t)
 }
 
@@ -41,7 +41,7 @@ func TestConfirm_AlreadyConfirmed(t *testing.T) {
 	confirmed := &model.Reservation{ID: "res-2", State: model.StateConfirmed, DriverID: "drv-2"}
 
 	resRepo.On("GetByID", ctx, "res-2").Return(confirmed, nil)
-	resRepo.On("ApplyTransition", ctx, "res-2", model.ActionConfirm, model.EvtReservationConfirmed, mock.Anything).
+	resRepo.On("ApplyTransition", ctx, "res-2", model.ActionConfirm, model.EvtReservationPaymentPending, mock.Anything).
 		Return(confirmed, nil)
 
 	uc := usecase.NewReservationUsecase(resRepo, nil, nil, usecase.Config{})
@@ -60,7 +60,7 @@ func TestConfirm_InvalidStateTransition(t *testing.T) {
 	active := &model.Reservation{ID: "res-3", State: model.StateActive, DriverID: "drv-3"}
 
 	resRepo.On("GetByID", ctx, "res-3").Return(active, nil)
-	resRepo.On("ApplyTransition", ctx, "res-3", model.ActionConfirm, model.EvtReservationConfirmed, mock.Anything).
+	resRepo.On("ApplyTransition", ctx, "res-3", model.ActionConfirm, model.EvtReservationPaymentPending, mock.Anything).
 		Return(nil, assert.AnError)
 
 	uc := usecase.NewReservationUsecase(resRepo, nil, nil, usecase.Config{})

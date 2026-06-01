@@ -64,3 +64,14 @@ func (c *billingGrpc) CloseInvoice(ctx context.Context, invoiceID string) error 
 	}
 	return nil
 }
+
+func (c *billingGrpc) CreatePaymentRequest(ctx context.Context, req CreatePaymentRequest) (*PaymentRequest, error) {
+	cctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+	_ = cctx
+	return &PaymentRequest{
+		ID:     "grpc-payment-" + req.ReservationID,
+		Method: req.Method,
+		Status: "PENDING",
+	}, nil
+}
