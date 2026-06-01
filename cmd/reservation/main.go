@@ -26,6 +26,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
+	resconsumer "github.com/farid/reservation-service/internal/reservation/consumer"
+	"github.com/farid/reservation-service/internal/reservation/model"
 	reshttp "github.com/farid/reservation-service/internal/reservation/handler/http"
 	resrepo "github.com/farid/reservation-service/internal/reservation/repository/postgres"
 	resuc "github.com/farid/reservation-service/internal/reservation/usecase"
@@ -107,6 +109,25 @@ func main() {
 	go worker.NewNoShowExpirer(resvRepo).Run(ctx)
 	go worker.NewOutboxPublisher(obRepo, publisher).Run(ctx)
 	go worker.NewReconciler(db).Run(ctx)
+
+	// ── RabbitMQ consumer (payment events from billing-service) ──────────────
+	paymentConsumer := resconsumer.NewBillingPaymentConsumer(resvRepo)
+	subscriber, err := rabbit.NewSubscriber(cfg.RabbitURL, cfg.RabbitExchange, cfg.RabbitQueue+"-payment",
+		[]string{
+			model.EvtPaymentSuccess,
+			model.EvtPaymentFailed,
+		},
+	)
+	if err != nil {
+		logger.Fatal(ctx, "rabbitmq payment subscriber init failed", map[string]interface{}{logger.ErrorKey: err.Error()})
+	}
+	defer subscriber.Close()
+	go func() {
+		logger.Info(ctx, "payment consumer: subscribing to billing.payment.*.v1", map[string]interface{}{"queue": cfg.RabbitQueue + "-payment"})
+		if err := subscriber.Consume(ctx, paymentConsumer.HandlePaymentConfirmed, paymentConsumer.HandlePaymentFailed); err != nil {
+			logger.Error(ctx, "payment consumer: stopped", map[string]interface{}{logger.ErrorKey: err.Error()})
+		}
+	}()
 
 	// ── HTTP server ──────────────────────────────────────────────────────────
 	if cfg.AppEnv == "local" {

@@ -18,11 +18,14 @@ func NewBillingPaymentConsumer(repo repository.ReservationRepository) *BillingPa
 
 type paymentEvent struct {
 	ReservationID string `json:"reservation_id"`
+	PaymentRef    string `json:"payment_ref,omitempty"`
+	Reason        string `json:"reason,omitempty"`
 }
 
-func (c *BillingPaymentConsumer) HandlePaymentConfirmed(ctx context.Context, payload []byte) error {
+// HandlePaymentConfirmed processes billing.payment.success.v1 events
+func (c *BillingPaymentConsumer) HandlePaymentConfirmed(ctx context.Context, body []byte) error {
 	var ev paymentEvent
-	if err := json.Unmarshal(payload, &ev); err != nil {
+	if err := json.Unmarshal(body, &ev); err != nil {
 		return err
 	}
 	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": ev.ReservationID})
@@ -30,12 +33,13 @@ func (c *BillingPaymentConsumer) HandlePaymentConfirmed(ctx context.Context, pay
 	return err
 }
 
-func (c *BillingPaymentConsumer) HandlePaymentFailed(ctx context.Context, payload []byte) error {
+// HandlePaymentFailed processes billing.payment.failed.v1 events
+func (c *BillingPaymentConsumer) HandlePaymentFailed(ctx context.Context, body []byte) error {
 	var ev paymentEvent
-	if err := json.Unmarshal(payload, &ev); err != nil {
+	if err := json.Unmarshal(body, &ev); err != nil {
 		return err
 	}
-	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": ev.ReservationID, "reason": "payment_failed"})
+	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": ev.ReservationID, "reason": ev.Reason})
 	_, err := c.repo.ApplyTransition(ctx, ev.ReservationID, model.ActionPaymentFail, model.EvtReservationCancelled, outboxPayload)
 	return err
 }
