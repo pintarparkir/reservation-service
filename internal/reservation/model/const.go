@@ -13,12 +13,13 @@ const (
 
 // Routing keys we publish on parkirpintar.events.
 const (
-	EvtReservationCreated    = "reservation.created.v1"
-	EvtReservationConfirmed  = "reservation.confirmed.v1"
-	EvtReservationCancelled  = "reservation.cancelled.v1"
-	EvtReservationExpired    = "reservation.expired.v1"
-	EvtReservationCheckedIn  = "reservation.checked_in.v1"
-	EvtReservationCheckedOut = "reservation.checked_out.v1"
+	EvtReservationCreated        = "reservation.created.v1"
+	EvtReservationPaymentPending = "reservation.payment_pending.v1"
+	EvtReservationConfirmed      = "reservation.confirmed.v1"
+	EvtReservationCancelled      = "reservation.cancelled.v1"
+	EvtReservationExpired        = "reservation.expired.v1"
+	EvtReservationCheckedIn      = "reservation.checked_in.v1"
+	EvtReservationCheckedOut     = "reservation.checked_out.v1"
 )
 
 func IsValidVehicleType(vt VehicleType) bool {

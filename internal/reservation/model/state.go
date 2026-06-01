@@ -6,17 +6,24 @@ import apperror "github.com/farid/reservation-service/pkg/error"
 type Action string
 
 const (
-	ActionConfirm  Action = "CONFIRM"
-	ActionCancel   Action = "CANCEL"
-	ActionCheckIn  Action = "CHECK_IN"
-	ActionCheckOut Action = "CHECK_OUT"
-	ActionExpire   Action = "EXPIRE" // worker-only
+	ActionConfirm        Action = "CONFIRM"
+	ActionPaymentSuccess Action = "PAYMENT_SUCCESS"
+	ActionPaymentFail    Action = "PAYMENT_FAIL"
+	ActionCancel         Action = "CANCEL"
+	ActionCheckIn        Action = "CHECK_IN"
+	ActionCheckOut       Action = "CHECK_OUT"
+	ActionExpire         Action = "EXPIRE"
 )
 
 var allowed = map[ReservationState]map[Action]ReservationState{
 	StatePending: {
-		ActionConfirm: StateConfirmed,
+		ActionConfirm: StatePendingPayment,
 		ActionCancel:  StateCancelled,
+	},
+	StatePendingPayment: {
+		ActionPaymentSuccess: StateConfirmed,
+		ActionPaymentFail:    StateCancelled,
+		ActionCancel:         StateCancelled,
 	},
 	StateConfirmed: {
 		ActionCheckIn: StateActive,

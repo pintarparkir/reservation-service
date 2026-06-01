@@ -6,12 +6,13 @@ import "time"
 type ReservationState string
 
 const (
-	StatePending   ReservationState = "PENDING"
-	StateConfirmed ReservationState = "CONFIRMED"
-	StateActive    ReservationState = "ACTIVE"
-	StateCompleted ReservationState = "COMPLETED"
-	StateCancelled ReservationState = "CANCELLED"
-	StateExpired   ReservationState = "EXPIRED"
+	StatePending        ReservationState = "PENDING"
+	StatePendingPayment ReservationState = "PENDING_PAYMENT"
+	StateConfirmed      ReservationState = "CONFIRMED"
+	StateActive         ReservationState = "ACTIVE"
+	StateCompleted      ReservationState = "COMPLETED"
+	StateCancelled      ReservationState = "CANCELLED"
+	StateExpired        ReservationState = "EXPIRED"
 )
 
 type VehicleType string
@@ -29,6 +30,7 @@ type Reservation struct {
 	State          ReservationState
 	HoldStart      time.Time
 	HoldEnd        time.Time
+	PaymentExpiresAt *time.Time
 	ConfirmedAt    *time.Time
 	CheckedInAt    *time.Time
 	CheckedOutAt   *time.Time

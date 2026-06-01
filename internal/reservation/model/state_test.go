@@ -12,8 +12,11 @@ func TestNext_AllowedTransitions(t *testing.T) {
 		action Action
 		want   ReservationState
 	}{
-		{StatePending, ActionConfirm, StateConfirmed},
+		{StatePending, ActionConfirm, StatePendingPayment},
 		{StatePending, ActionCancel, StateCancelled},
+		{StatePendingPayment, ActionPaymentSuccess, StateConfirmed},
+		{StatePendingPayment, ActionPaymentFail, StateCancelled},
+		{StatePendingPayment, ActionCancel, StateCancelled},
 		{StateConfirmed, ActionCheckIn, StateActive},
 		{StateConfirmed, ActionCancel, StateCancelled},
 		{StateConfirmed, ActionExpire, StateExpired},
@@ -42,6 +45,8 @@ func TestNext_IllegalTransitions(t *testing.T) {
 		{StateExpired, ActionCheckIn},
 		{StatePending, ActionCheckIn},  // can't check-in before confirm
 		{StatePending, ActionCheckOut}, // can't check-out before active
+		{StatePendingPayment, ActionCheckIn}, // can't check-in before payment success
+		{StatePendingPayment, ActionExpire}, // only worker can expire CONFIRMED
 	}
 	for _, tc := range cases {
 		_, err := Next(tc.from, tc.action)
