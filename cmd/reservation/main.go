@@ -109,6 +109,7 @@ func main() {
 	go worker.NewNoShowExpirer(resvRepo).Run(ctx)
 	go worker.NewOutboxPublisher(obRepo, publisher).Run(ctx)
 	go worker.NewReconciler(db).Run(ctx)
+	go worker.NewPaymentTimeoutWorker(db, time.Minute*15).Run(ctx) // Cancel unpaid reservations after 15 min
 
 	// ── RabbitMQ consumer (payment events from billing-service) ──────────────
 	paymentConsumer := resconsumer.NewBillingPaymentConsumer(resvRepo)
