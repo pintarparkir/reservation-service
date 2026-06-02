@@ -26,6 +26,7 @@ type Config struct {
 
 	RabbitURL      string `env:"RABBIT_URL" envDefault:"amqp://guest:guest@localhost:5672/"`
 	RabbitExchange string `env:"RABBIT_EXCHANGE" envDefault:"parkirpintar.events"`
+	RabbitQueue    string `env:"RABBIT_QUEUE" envDefault:"reservation-service"`
 
 	UserGrpcAddr    string `env:"USER_GRPC_ADDR" envDefault:"localhost:9094"`
 	BillingGrpcAddr string `env:"BILLING_GRPC_ADDR" envDefault:"localhost:9091"`
