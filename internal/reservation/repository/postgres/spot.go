@@ -17,10 +17,16 @@ type spotRepo struct{ db *sqlx.DB }
 func NewSpotRepository(db *sqlx.DB) repository.SpotRepository { return &spotRepo{db: db} }
 
 const assignSystemSQL = `
-SELECT id FROM spot
-WHERE vehicle_type = $1 AND status = 'AVAILABLE'
-ORDER BY id
-FOR UPDATE SKIP LOCKED
+SELECT s.id FROM spot s
+WHERE s.vehicle_type = $1 AND s.status = 'AVAILABLE'
+  AND NOT EXISTS (
+    SELECT 1 FROM reservation r
+    WHERE r.spot_id = s.id
+      AND r.state IN ('PENDING','CONFIRMED','ACTIVE','PENDING_PAYMENT')
+      AND r.hold_window && tstzrange(now(), now() + interval '1 second')
+  )
+ORDER BY s.id
+FOR UPDATE OF s SKIP LOCKED
 LIMIT 1
 `
 
@@ -61,11 +67,17 @@ func (r *spotRepo) Assign(ctx context.Context, vt model.VehicleType, preferred s
 }
 
 const availSQL = `
-SELECT floor, count(*)::int AS count
-FROM spot
-WHERE vehicle_type = $1 AND status = 'AVAILABLE'
-GROUP BY floor
-ORDER BY floor
+SELECT s.floor, count(*)::int AS count
+FROM spot s
+WHERE s.vehicle_type = $1 AND s.status = 'AVAILABLE'
+  AND NOT EXISTS (
+    SELECT 1 FROM reservation r
+    WHERE r.spot_id = s.id
+      AND r.state IN ('PENDING','CONFIRMED','ACTIVE','PENDING_PAYMENT')
+      AND r.hold_window && tstzrange(now(), now() + interval '1 second')
+  )
+GROUP BY s.floor
+ORDER BY s.floor
 `
 
 func (r *spotRepo) AvailabilityByFloor(ctx context.Context, vt model.VehicleType) ([]repository.FloorCount, int, error) {
