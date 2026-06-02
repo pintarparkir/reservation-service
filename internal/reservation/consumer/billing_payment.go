@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/farid/reservation-service/internal/reservation/model"
 	"github.com/farid/reservation-service/internal/reservation/repository"
@@ -14,6 +15,19 @@ type BillingPaymentConsumer struct {
 
 func NewBillingPaymentConsumer(repo repository.ReservationRepository) *BillingPaymentConsumer {
 	return &BillingPaymentConsumer{repo: repo}
+}
+
+// Handle routes messages to the appropriate handler based on the routing key.
+// It satisfies the rabbit.Handler signature.
+func (c *BillingPaymentConsumer) Handle(ctx context.Context, routingKey string, body []byte) error {
+	switch routingKey {
+	case model.EvtPaymentSuccess:
+		return c.HandlePaymentConfirmed(ctx, body)
+	case model.EvtPaymentFailed:
+		return c.HandlePaymentFailed(ctx, body)
+	default:
+		return fmt.Errorf("unknown routing key: %s", routingKey)
+	}
 }
 
 type paymentEvent struct {

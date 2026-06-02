@@ -27,8 +27,8 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	resconsumer "github.com/farid/reservation-service/internal/reservation/consumer"
-	"github.com/farid/reservation-service/internal/reservation/model"
 	reshttp "github.com/farid/reservation-service/internal/reservation/handler/http"
+	"github.com/farid/reservation-service/internal/reservation/model"
 	resrepo "github.com/farid/reservation-service/internal/reservation/repository/postgres"
 	resuc "github.com/farid/reservation-service/internal/reservation/usecase"
 	"github.com/farid/reservation-service/internal/reservation/worker"
@@ -125,7 +125,7 @@ func main() {
 	defer subscriber.Close()
 	go func() {
 		logger.Info(ctx, "payment consumer: subscribing to billing.payment.*.v1", map[string]interface{}{"queue": cfg.RabbitQueue + "-payment"})
-		if err := subscriber.Consume(ctx, paymentConsumer.HandlePaymentConfirmed, paymentConsumer.HandlePaymentFailed); err != nil {
+		if err := subscriber.Consume(ctx, paymentConsumer.Handle); err != nil {
 			logger.Error(ctx, "payment consumer: stopped", map[string]interface{}{logger.ErrorKey: err.Error()})
 		}
 	}()
