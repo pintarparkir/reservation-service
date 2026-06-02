@@ -35,6 +35,7 @@ import (
 
 	"github.com/farid/reservation-service/pkg/configs"
 	pgdb "github.com/farid/reservation-service/pkg/db/postgres"
+	"github.com/farid/reservation-service/pkg/grpcclient"
 	"github.com/farid/reservation-service/pkg/lock"
 	"github.com/farid/reservation-service/pkg/logger"
 	pkgOtel "github.com/farid/reservation-service/pkg/otel"
@@ -140,7 +141,13 @@ func main() {
 	router.Use(otelgin.Middleware(cfg.AppName))
 	router.Use(gin.Recovery(), cors.Default())
 	router.GET("/health", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"status": "ok"}) })
-	reshttp.RegisterReservationHandler(router.Group("/v1"), uc, cfg.SuperAppJWTPubKey, limiter)
+
+	// user-service gRPC client for driver resolution
+	var users grpcclient.UserClient
+	if cfg.UserGrpcAddr != "" {
+		users, _ = grpcclient.NewUserGrpc(cfg.UserGrpcAddr)
+	}
+	reshttp.RegisterReservationHandler(router.Group("/v1"), uc, cfg.SuperAppJWTPubKey, limiter, users)
 
 	httpSrv := &http.Server{
 		Addr:              ":" + cfg.AppPort,

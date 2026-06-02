@@ -18,6 +18,10 @@ func (s stubUserClient) GetMSISDN(context.Context, string) (string, error) {
 	return s.msisdn, s.err
 }
 
+func (s stubUserClient) UpsertDriver(context.Context, string, string, string) (string, error) {
+	return "stub-uuid", nil
+}
+
 func (s stubUserClient) GetDefaultPaymentMethod(context.Context, string) (*grpcclient.PaymentMethod, error) {
 	return nil, nil
 }

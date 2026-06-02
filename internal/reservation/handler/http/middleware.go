@@ -6,14 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/farid/reservation-service/pkg/logger"
+
 	pkgjwt "github.com/farid/reservation-service/pkg/jwt"
 )
 
-// jwtMiddleware parses + verifies the Bearer JWT, sets driver_id in context.
-// Note: driver_id here is the super-app's `sub` (external_user_id). When we
-// need our internal user_profile.id we'd resolve via gRPC user-service.
-// For MVP we trust `sub` as a logical driver identifier — the user-service
-// already lazy-registered the driver on first /v1/me call.
+// jwtMiddleware parses + verifies the Bearer JWT, then resolves the internal
+// driver UUID via user-service gRPC UpsertDriver (lazy registration).
 func (h *reservationHandler) jwtMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		raw := c.GetHeader("Authorization")
@@ -31,9 +30,20 @@ func (h *reservationHandler) jwtMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Use the JWT sub as the driver identifier for now. A future iteration
-		// adds a Redis-cached lookup against user-service.GetUserByExternalID.
-		c.Set(ctxDriverID, claims.Sub)
+		// Resolve internal driver UUID via user-service gRPC.
+		if h.users != nil {
+			driverID, upsertErr := h.users.UpsertDriver(c.Request.Context(), claims.Sub, claims.Phone, "")
+			if upsertErr != nil {
+				logger.Error(c.Request.Context(), "upsert driver failed", map[string]interface{}{logger.ErrorKey: upsertErr.Error()})
+				c.AbortWithStatusJSON(http.StatusInternalServerError,
+					gin.H{"error": "INTERNAL", "message": "driver resolution failed"})
+				return
+			}
+			c.Set(ctxDriverID, driverID)
+		} else {
+			// Fallback: use sub directly (dev mode with no user-service)
+			c.Set(ctxDriverID, claims.Sub)
+		}
 		c.Next()
 	}
 }
