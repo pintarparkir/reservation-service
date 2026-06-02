@@ -2,7 +2,6 @@ package rabbit
 
 import (
 	"context"
-	"fmt"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel"
@@ -16,19 +15,9 @@ type Publisher struct {
 }
 
 func NewPublisher(amqpURL, exchange string) (*Publisher, error) {
-	conn, err := amqp.Dial(amqpURL)
+	conn, ch, err := dialAndDeclare(amqpURL, exchange)
 	if err != nil {
-		return nil, fmt.Errorf("amqp dial: %w", err)
-	}
-	ch, err := conn.Channel()
-	if err != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("amqp channel: %w", err)
-	}
-	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
-		_ = ch.Close()
-		_ = conn.Close()
-		return nil, fmt.Errorf("exchange declare: %w", err)
+		return nil, err
 	}
 	return &Publisher{conn: conn, ch: ch, exchange: exchange}, nil
 }
@@ -51,10 +40,5 @@ func (p *Publisher) Publish(ctx context.Context, routingKey string, body []byte)
 }
 
 func (p *Publisher) Close() {
-	if p.ch != nil {
-		_ = p.ch.Close()
-	}
-	if p.conn != nil {
-		_ = p.conn.Close()
-	}
+	closeConnCh(p.ch, p.conn)
 }

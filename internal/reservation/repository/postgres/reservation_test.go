@@ -171,7 +171,7 @@ func TestReservationRepo_ApplyTransition_HappyPath(t *testing.T) {
 		WithArgs("res-1").
 		WillReturnRows(sqlmock.NewRows([]string{"state", "version"}).AddRow(model.StatePending, 1))
 	mock.ExpectExec(`UPDATE reservation SET state`).
-		WithArgs(model.StateConfirmed, "res-1", 1).
+		WithArgs(model.StatePendingPayment, "res-1", 1).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectExec(`INSERT INTO outbox_event`).
 		WithArgs("res-1", model.EvtReservationConfirmed, []byte(`{}`)).

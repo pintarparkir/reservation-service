@@ -1,3 +1,4 @@
+// Package otel provides OpenTelemetry instrumentation helpers.
 package otel
 
 import (

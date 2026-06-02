@@ -23,22 +23,22 @@ const (
 )
 
 type Reservation struct {
-	ID             string
-	DriverID       string
-	SpotID         string
-	VehicleType    VehicleType
-	State          ReservationState
-	HoldStart      time.Time
-	HoldEnd        time.Time
+	ID               string
+	DriverID         string
+	SpotID           string
+	VehicleType      VehicleType
+	State            ReservationState
+	HoldStart        time.Time
+	HoldEnd          time.Time
 	PaymentExpiresAt *time.Time
-	ConfirmedAt    *time.Time
-	CheckedInAt    *time.Time
-	CheckedOutAt   *time.Time
-	ExpiresAt      *time.Time
-	IdempotencyKey string
-	Version        int
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
+	ConfirmedAt      *time.Time
+	CheckedInAt      *time.Time
+	CheckedOutAt     *time.Time
+	ExpiresAt        *time.Time
+	IdempotencyKey   string
+	Version          int
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 type Spot struct {

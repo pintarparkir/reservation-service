@@ -22,6 +22,12 @@ const (
 	EvtReservationCheckedOut     = "reservation.checked_out.v1"
 )
 
+// Routing keys we consume from billing-service events.
+const (
+	EvtPaymentSuccess = "billing.payment.success.v1"
+	EvtPaymentFailed  = "billing.payment.failed.v1"
+)
+
 func IsValidVehicleType(vt VehicleType) bool {
 	return vt == VehicleTypeCar || vt == VehicleTypeMotorcycle
 }
