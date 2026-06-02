@@ -22,7 +22,7 @@ WHERE s.vehicle_type = $1 AND s.status = 'AVAILABLE'
   AND NOT EXISTS (
     SELECT 1 FROM reservation r
     WHERE r.spot_id = s.id
-      AND r.state IN ('PENDING','CONFIRMED','ACTIVE')
+      AND r.state IN ('PENDING','PENDING_PAYMENT','CONFIRMED','ACTIVE')
       AND r.hold_window && tstzrange(now(), now() + interval '1 second')
   )
 ORDER BY s.id
@@ -73,7 +73,7 @@ WHERE s.vehicle_type = $1 AND s.status = 'AVAILABLE'
   AND NOT EXISTS (
     SELECT 1 FROM reservation r
     WHERE r.spot_id = s.id
-      AND r.state IN ('PENDING','CONFIRMED','ACTIVE')
+      AND r.state IN ('PENDING','PENDING_PAYMENT','CONFIRMED','ACTIVE')
       AND r.hold_window && tstzrange(now(), now() + interval '1 second')
   )
 GROUP BY s.floor
