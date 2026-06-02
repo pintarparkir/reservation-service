@@ -5,21 +5,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"time"
 
 	"github.com/farid/reservation-service/internal/reservation/model"
 	"github.com/farid/reservation-service/internal/reservation/repository"
 )
 
 type BillingPaymentConsumer struct {
-	repo repository.ReservationRepository
+	repo       repository.ReservationRepository
+	billingURL string
 }
 
-func NewBillingPaymentConsumer(repo repository.ReservationRepository) *BillingPaymentConsumer {
-	return &BillingPaymentConsumer{repo: repo}
+func NewBillingPaymentConsumer(repo repository.ReservationRepository, billingURL string) *BillingPaymentConsumer {
+	return &BillingPaymentConsumer{repo: repo, billingURL: billingURL}
 }
 
 // Handle routes messages to the appropriate handler based on the routing key.
-// It satisfies the rabbit.Handler signature.
 func (c *BillingPaymentConsumer) Handle(ctx context.Context, routingKey string, body []byte) error {
 	switch routingKey {
 	case model.EvtPaymentSuccess:
@@ -33,28 +36,66 @@ func (c *BillingPaymentConsumer) Handle(ctx context.Context, routingKey string, 
 
 type paymentEvent struct {
 	ReservationID string `json:"reservation_id"`
-	PaymentRef    string `json:"payment_ref,omitempty"`
+	OrderID       string `json:"order_id"`
+	PgReference   string `json:"pg_reference,omitempty"`
 	Reason        string `json:"reason,omitempty"`
 }
 
-// HandlePaymentConfirmed processes billing.payment.success.v1 events
 func (c *BillingPaymentConsumer) HandlePaymentConfirmed(ctx context.Context, body []byte) error {
 	var ev paymentEvent
 	if err := json.Unmarshal(body, &ev); err != nil {
 		return err
 	}
-	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": ev.ReservationID})
-	_, err := c.repo.ApplyTransition(ctx, ev.ReservationID, model.ActionPaymentSuccess, model.EvtReservationConfirmed, outboxPayload)
+	resID := ev.ReservationID
+	if resID == "" && ev.OrderID != "" {
+		// order_id is invoice_id — resolve reservation_id via billing
+		resID = c.resolveReservationID(ctx, ev.OrderID)
+	}
+	if resID == "" {
+		return fmt.Errorf("cannot resolve reservation_id from event: %s", string(body))
+	}
+	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": resID})
+	_, err := c.repo.ApplyTransition(ctx, resID, model.ActionPaymentSuccess, model.EvtReservationConfirmed, outboxPayload)
 	return err
 }
 
-// HandlePaymentFailed processes billing.payment.failed.v1 events
 func (c *BillingPaymentConsumer) HandlePaymentFailed(ctx context.Context, body []byte) error {
 	var ev paymentEvent
 	if err := json.Unmarshal(body, &ev); err != nil {
 		return err
 	}
-	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": ev.ReservationID, "reason": ev.Reason})
-	_, err := c.repo.ApplyTransition(ctx, ev.ReservationID, model.ActionPaymentFail, model.EvtReservationCancelled, outboxPayload)
+	resID := ev.ReservationID
+	if resID == "" && ev.OrderID != "" {
+		resID = c.resolveReservationID(ctx, ev.OrderID)
+	}
+	if resID == "" {
+		return fmt.Errorf("cannot resolve reservation_id from event: %s", string(body))
+	}
+	outboxPayload, _ := json.Marshal(map[string]any{"reservation_id": resID, "reason": ev.Reason})
+	_, err := c.repo.ApplyTransition(ctx, resID, model.ActionPaymentFail, model.EvtReservationCancelled, outboxPayload)
 	return err
+}
+
+// resolveReservationID calls billing-service to get reservation_id from invoice_id.
+func (c *BillingPaymentConsumer) resolveReservationID(ctx context.Context, invoiceID string) string {
+	if c.billingURL == "" {
+		return ""
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(fmt.Sprintf("%s/v1/invoices/%s", c.billingURL, invoiceID))
+	if err != nil {
+		return ""
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	body, _ := io.ReadAll(resp.Body)
+	var inv struct {
+		ReservationID string `json:"reservation_id"`
+	}
+	if json.Unmarshal(body, &inv) == nil {
+		return inv.ReservationID
+	}
+	return ""
 }

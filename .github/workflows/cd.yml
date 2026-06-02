@@ -100,6 +100,7 @@ jobs:
             CHECK_IN_BUILDING_LNG=106.8456
             USER_GRPC_ADDR=user-service-725nddkmwq-as.a.run.app:443
             BILLING_GRPC_ADDR=billing-service-725nddkmwq-as.a.run.app:443
+            BILLING_REST_URL=https://billing-service-725nddkmwq-as.a.run.app
           secrets: |
             DB_PASSWORD=db-password:latest
             REDIS_PASSWORD=redis-password:latest

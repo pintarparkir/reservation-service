@@ -113,7 +113,7 @@ func main() {
 	go worker.NewPaymentTimeoutWorker(db, time.Minute*15).Run(ctx) // Cancel unpaid reservations after 15 min
 
 	// ── RabbitMQ consumer (payment events from billing-service) ──────────────
-	paymentConsumer := resconsumer.NewBillingPaymentConsumer(resvRepo)
+	paymentConsumer := resconsumer.NewBillingPaymentConsumer(resvRepo, cfg.BillingRestURL)
 	subscriber, err := rabbit.NewSubscriber(cfg.RabbitURL, cfg.RabbitExchange, cfg.RabbitQueue+"-payment",
 		[]string{
 			model.EvtPaymentSuccess,
