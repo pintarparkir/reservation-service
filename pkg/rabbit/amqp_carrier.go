@@ -1,3 +1,4 @@
+// Package rabbit provides RabbitMQ publisher and subscriber primitives.
 package rabbit
 
 import amqp "github.com/rabbitmq/amqp091-go"

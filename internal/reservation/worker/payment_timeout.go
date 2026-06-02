@@ -35,7 +35,7 @@ func (w *PaymentTimeoutWorker) ExpireBatch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	rows, err := tx.QueryxContext(ctx, `
 		SELECT id
@@ -48,7 +48,7 @@ func (w *PaymentTimeoutWorker) ExpireBatch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var id string

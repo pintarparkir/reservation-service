@@ -1,3 +1,4 @@
+// Package consumer provides RabbitMQ message handlers for billing events.
 package consumer
 
 import (
