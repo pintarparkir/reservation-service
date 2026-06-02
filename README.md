@@ -4,7 +4,6 @@
 [![Reliability](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=reliability_rating&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
 [![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=sqale_rating&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
 [![Duplications](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=duplicated_lines_density&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=coverage&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
 
 **Cloud Run:** `https://reservation-service-725nddkmwq-as.a.run.app`
 
