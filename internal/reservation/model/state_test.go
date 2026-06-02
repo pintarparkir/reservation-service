@@ -43,10 +43,10 @@ func TestNext_IllegalTransitions(t *testing.T) {
 		{StateCompleted, ActionCancel},
 		{StateCancelled, ActionConfirm},
 		{StateExpired, ActionCheckIn},
-		{StatePending, ActionCheckIn},  // can't check-in before confirm
-		{StatePending, ActionCheckOut}, // can't check-out before active
+		{StatePending, ActionCheckIn},        // can't check-in before confirm
+		{StatePending, ActionCheckOut},       // can't check-out before active
 		{StatePendingPayment, ActionCheckIn}, // can't check-in before payment success
-		{StatePendingPayment, ActionExpire}, // only worker can expire CONFIRMED
+		{StatePendingPayment, ActionExpire},  // only worker can expire CONFIRMED
 	}
 	for _, tc := range cases {
 		_, err := Next(tc.from, tc.action)

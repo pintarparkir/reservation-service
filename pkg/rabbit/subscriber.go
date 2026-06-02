@@ -17,40 +17,28 @@ type Subscriber struct {
 }
 
 func NewSubscriber(amqpURL, exchange, queue string, routingKeys []string) (*Subscriber, error) {
-	conn, err := amqp.Dial(amqpURL)
+	conn, ch, err := dialAndDeclare(amqpURL, exchange)
 	if err != nil {
-		return nil, fmt.Errorf("amqp dial: %w", err)
-	}
-	ch, err := conn.Channel()
-	if err != nil {
-		_ = conn.Close()
-		return nil, fmt.Errorf("amqp channel: %w", err)
-	}
-	if err := ch.ExchangeDeclare(exchange, "topic", true, false, false, false, nil); err != nil {
-		_ = ch.Close()
-		_ = conn.Close()
-		return nil, fmt.Errorf("exchange declare: %w", err)
+		return nil, err
 	}
 	if _, err := ch.QueueDeclare(queue, true, false, false, false, nil); err != nil {
-		_ = ch.Close()
-		_ = conn.Close()
+		closeConnCh(ch, conn)
 		return nil, fmt.Errorf("queue declare: %w", err)
 	}
 	for _, key := range routingKeys {
 		if err := ch.QueueBind(queue, key, exchange, false, nil); err != nil {
-			_ = ch.Close()
-			_ = conn.Close()
+			closeConnCh(ch, conn)
 			return nil, fmt.Errorf("queue bind %s: %w", key, err)
 		}
 	}
 	if err := ch.Qos(10, 0, false); err != nil {
-		_ = ch.Close()
-		_ = conn.Close()
+		closeConnCh(ch, conn)
 		return nil, fmt.Errorf("qos: %w", err)
 	}
 	return &Subscriber{conn: conn, ch: ch, queue: queue}, nil
 }
 
+// Handler processes a consumed message identified by its routing key.
 type Handler func(ctx context.Context, routingKey string, body []byte) error
 
 func (s *Subscriber) Consume(ctx context.Context, handler Handler) error {
@@ -85,10 +73,5 @@ func (s *Subscriber) Consume(ctx context.Context, handler Handler) error {
 }
 
 func (s *Subscriber) Close() {
-	if s.ch != nil {
-		_ = s.ch.Close()
-	}
-	if s.conn != nil {
-		_ = s.conn.Close()
-	}
+	closeConnCh(s.ch, s.conn)
 }

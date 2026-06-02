@@ -17,16 +17,16 @@ import (
 
 // E2EPaymentFlowSuite provides comprehensive E2E test scenarios for payment flow integration
 type E2EPaymentFlowSuite struct {
-	ctx          context.Context
-	repo         *mockrepo.MockReservationRepository
-	locker       lock.Locker
-	uc           resuc.ReservationUsecase
-	reservation  *model.Reservation
+	ctx         context.Context
+	repo        *mockrepo.MockReservationRepository
+	locker      lock.Locker
+	uc          resuc.ReservationUsecase
+	reservation *model.Reservation
 }
 
 func NewE2EPaymentFlowSuite() *E2EPaymentFlowSuite {
 	return &E2EPaymentFlowSuite{
-		ctx: context.Background(),
+		ctx:  context.Background(),
 		repo: new(mockrepo.MockReservationRepository),
 	}
 }
@@ -43,10 +43,10 @@ func (s *E2EPaymentFlowSuite) TestE2E_ConfirmToPendingPayment(t *testing.T) {
 	s.SetupTest()
 
 	s.reservation = &model.Reservation{
-		ID:        "res-e2e-confirm-1",
-		DriverID:  "driver-e2e-123",
-		SpotID:    "spot-e2e-123",
-		State:     model.StatePending,
+		ID:          "res-e2e-confirm-1",
+		DriverID:    "driver-e2e-123",
+		SpotID:      "spot-e2e-123",
+		State:       model.StatePending,
 		VehicleType: model.VehicleCar,
 	}
 
@@ -69,9 +69,9 @@ func (s *E2EPaymentFlowSuite) TestE2E_PendingPaymentToConfirmedOnSuccess(t *test
 	s.SetupTest()
 
 	pendingPayReservation := &model.Reservation{
-		ID:      "res-e2e-pay-success",
+		ID:       "res-e2e-pay-success",
 		DriverID: "driver-e2e-123",
-		State:   model.StatePendingPayment,
+		State:    model.StatePendingPayment,
 	}
 
 	// State transition: PENDING_PAYMENT → CONFIRMED
@@ -90,9 +90,9 @@ func (s *E2EPaymentFlowSuite) TestE2E_PendingPaymentToCancelledOnPaymentFail(t *
 	s.SetupTest()
 
 	pendingPayReservation := &model.Reservation{
-		ID:      "res-e2e-pay-fail",
+		ID:       "res-e2e-pay-fail",
 		DriverID: "driver-e2e-123",
-		State:   model.StatePendingPayment,
+		State:    model.StatePendingPayment,
 	}
 
 	// State transition: PENDING_PAYMENT → CANCELLED
@@ -132,9 +132,9 @@ func (s *E2EPaymentFlowSuite) TestE2E_PaymentRetryScenario(t *testing.T) {
 
 	// Initial failed attempt
 	initialReservation := &model.Reservation{
-		ID:      "res-e2e-retry",
+		ID:       "res-e2e-retry",
 		DriverID: "driver-e2e-123",
-		State:   model.StatePendingPayment,
+		State:    model.StatePendingPayment,
 	}
 
 	// First payment failure
