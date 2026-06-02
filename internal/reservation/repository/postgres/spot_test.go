@@ -22,7 +22,7 @@ func TestSpotRepo_Assign_SystemAssigned(t *testing.T) {
 	repo := postgres.NewSpotRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`SELECT id FROM spot`).
+	mock.ExpectQuery(`SELECT s.id FROM spot s`).
 		WithArgs(model.VehicleTypeCar).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow("spot-1"))
 	mock.ExpectCommit()
@@ -62,7 +62,7 @@ func TestSpotRepo_Assign_NotFound(t *testing.T) {
 	repo := postgres.NewSpotRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`SELECT id FROM spot`).
+	mock.ExpectQuery(`SELECT s.id FROM spot s`).
 		WithArgs(model.VehicleTypeCar).
 		WillReturnError(sql.ErrNoRows)
 	mock.ExpectRollback()
@@ -81,7 +81,7 @@ func TestSpotRepo_AvailabilityByFloor(t *testing.T) {
 	ctx := context.Background()
 	repo := postgres.NewSpotRepository(db)
 
-	mock.ExpectQuery(`SELECT floor, count`).
+	mock.ExpectQuery(`SELECT s.floor`).
 		WithArgs(model.VehicleTypeCar).
 		WillReturnRows(sqlmock.NewRows([]string{"floor", "count"}).
 			AddRow(1, 3).
