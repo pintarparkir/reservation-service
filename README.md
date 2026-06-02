@@ -1,10 +1,10 @@
 # reservation-service
 
-[![Security](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=security_rating&token=66ea93348f4a130c2f9af61ca6938a8d5b9b4f9a)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
-[![Reliability](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=reliability_rating&token=66ea93348f4a130c2f9af61ca6938a8d5b9b4f9a)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
-[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=sqale_rating&token=66ea93348f4a130c2f9af61ca6938a8d5b9b4f9a)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
-[![Duplications](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=duplicated_lines_density&token=66ea93348f4a130c2f9af61ca6938a8d5b9b4f9a)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=coverage&token=66ea93348f4a130c2f9af61ca6938a8d5b9b4f9a)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
+[![Security](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=security_rating&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
+[![Reliability](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=reliability_rating&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
+[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=sqale_rating&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
+[![Duplications](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=duplicated_lines_density&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=pintarparkir_reservation-service&metric=coverage&token=a282c8154601e67376f352be6bb9774cf89715f4)](https://sonarcloud.io/summary/new_code?id=pintarparkir_reservation-service)
 
 **Cloud Run:** `https://reservation-service-725nddkmwq-as.a.run.app`
 
