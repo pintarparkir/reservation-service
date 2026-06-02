@@ -24,8 +24,8 @@ const (
 
 // Routing keys we consume from billing-service events.
 const (
-	EvtPaymentSuccess = "billing.payment.success.v1"
-	EvtPaymentFailed  = "billing.payment.failed.v1"
+	EvtPaymentSuccess = "payment.paid.v1"
+	EvtPaymentFailed  = "payment.failed.v1"
 )
 
 func IsValidVehicleType(vt VehicleType) bool {
