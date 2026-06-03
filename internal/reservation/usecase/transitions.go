@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/farid/reservation-service/internal/reservation/model"
 	apperror "github.com/farid/reservation-service/pkg/error"
@@ -106,8 +107,7 @@ func (u *reservationUsecase) CheckOut(ctx context.Context, id string) (*model.Re
 		"reservation_id": id,
 		"confirmed_at":   r.ConfirmedAt,
 		"checked_in_at":  r.CheckedInAt,
-		// checked_out_at is set by the transition itself; consumer can
-		// recompute or read from a future GetReservation call.
+		"checked_out_at": time.Now().UTC(),
 	})
 	return u.repo.ApplyTransition(ctx, id, model.ActionCheckOut, model.EvtReservationCheckedOut, payload)
 }
